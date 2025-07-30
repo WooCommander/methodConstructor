@@ -5,13 +5,23 @@ import CustomTypeCard from '@/shared/ui/CustomTypeCard/CustomTypeCard.vue'
 
 // Базовые типы
 const baseTypes = [
-  'string',
+  'bool',
+  'byte',
+  'short',
   'int',
+  'long',
   'float',
-  'boolean',
-  'Date',
+  'double',
+  'decimal',
+  'char',
+  'string',
+  'uuid',  
+  'DateTime',
+  
   'List<...>',
   'Array<...>',
+  'Nullable<...>',
+  'Task<...>',
   
 ]
 
