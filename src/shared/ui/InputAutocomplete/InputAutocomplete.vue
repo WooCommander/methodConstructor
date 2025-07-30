@@ -65,26 +65,38 @@ const getTextAroundPlaceholder = computed(() => {
   }
 })
 
+const placeholderInput = ref('')
+
 const filteredOptions = computed(() => {
-  // Если курсор находится в многоточии, показываем все опции
+  let search = ''
   if (isCursorInPlaceholder.value) {
-    return props.options
+    search = placeholderInput.value
+  } else {
+    search = input.value
   }
-  
-  // Иначе фильтруем по введенному тексту
-  const opts = !input.value ? props.options : props.options.filter(opt =>
-    opt.toLowerCase().includes(input.value.toLowerCase())
+  if (!search) return props.options
+  return props.options.filter(opt =>
+    opt.toLowerCase().includes(search.toLowerCase())
   )
-  // Если после фильтрации выделенный элемент вне диапазона — сбрасываем выделение
-  if (highlighted.value >= opts.length) highlighted.value = opts.length - 1
-  if (highlighted.value < 0 && opts.length > 0) highlighted.value = 0
-  return opts
 })
 
-// Проверяем, является ли введенный текст пользовательским типом
 const isCustomType = computed(() => {
-  if (!input.value || !props.allowCustom) return false
-  return !props.options.includes(input.value) && input.value.trim().length > 0
+  let search = ''
+  if (isCursorInPlaceholder.value) {
+    search = placeholderInput.value
+  } else {
+    search = input.value
+  }
+  if (!props.allowCustom) return false
+  if (!search) return false
+  return !props.options.includes(search) && search.trim().length > 0
+})
+
+const createText = computed(() => {
+  if (isCursorInPlaceholder.value) {
+    return placeholderInput.value
+  }
+  return input.value
 })
 
 // Инициализация при изменении modelValue
@@ -161,51 +173,59 @@ const select = (option: string) => {
 }
 
 const createCustomType = () => {
-  if (input.value.trim()) {
-    // Извлекаем имя типа из конструкций типа List<MyClass> или Array<MyClass>
-    let typeName = input.value.trim()
-    
-    // Ищем паттерны типа List<...>, Array<...>, Map<...>, Set<...>, Task<...>, Nullable<...>
+  let typeName = ''
+  
+  if (isCursorInPlaceholder.value) {
+    // Если курсор в многоточии, берем текст из многоточия
+    const { before, after } = getTextAroundPlaceholder.value
+    const currentInput = props.modelValue?.substring(before.length, props.modelValue.length - after.length) || ''
+    typeName = currentInput.trim()
+  } else {
+    // Обычный режим
+    typeName = input.value.trim()
+  }
+  
+  if (typeName) {
+    // Извлекаем базовый тип из generic конструкций
     const genericPattern = /^(List|Array|Map|Set|Task|Nullable)<(.+?)>$/i
     const match = typeName.match(genericPattern)
-    
     if (match) {
-      // Извлекаем содержимое внутри угловых скобок
       typeName = match[2].trim()
-      
-      // Если внутри еще есть вложенные конструкции, берем только первое слово
-      // Например, из List<MyClass<Something>> извлекаем MyClass
       const innerMatch = typeName.match(/^([A-Za-z_][A-Za-z0-9_]*)/)
       if (innerMatch) {
         typeName = innerMatch[1]
       }
     }
     
-    // Определяем тип на основе имени
     const isEnum = typeName.toLowerCase().includes('enum')
     const typeKind = isEnum ? 'enum' : 'class'
-    
     emit('createCustom', typeName, typeKind)
-    emit('update:modelValue', input.value.trim())
+    
+    if (isCursorInPlaceholder.value) {
+      // Заменяем многоточие на созданный тип
+      const { before, after } = getTextAroundPlaceholder.value
+      const newValue = before + typeName + after
+      emit('update:modelValue', newValue)
+      input.value = newValue
+    } else {
+      emit('update:modelValue', input.value.trim())
+    }
     close()
   }
 }
 
 const onInput = (e: Event) => {
   const target = e.target as HTMLInputElement
-  input.value = target.value
+  if (isCursorInPlaceholder.value) {
+    placeholderInput.value = target.value
+  } else {
+    input.value = target.value
+  }
   cursorPosition.value = target.selectionStart || 0
   selectionStart.value = target.selectionStart || 0
   selectionEnd.value = target.selectionEnd || 0
-  
-  // Если курсор находится в многоточии, открываем список со всеми опциями
-  if (isCursorInPlaceholder.value) {
-    isOpen.value = true
-    highlighted.value = 0
-  } else {
-    // Обычный режим - фильтруем по введенному тексту
-    isOpen.value = true
-  }
+  isOpen.value = true
+  highlighted.value = 0
 }
 
 const onKeydown = (e: KeyboardEvent) => {
@@ -214,11 +234,10 @@ const onKeydown = (e: KeyboardEvent) => {
     highlighted.value = 0
     return
   }
-  
   if (!isOpen.value) return
-  
+  const maxIndex = filteredOptions.value.length + (isCustomType.value ? 1 : 0) - 1
   if (e.key === 'ArrowDown') {
-    if (highlighted.value < filteredOptions.value.length - 1) {
+    if (highlighted.value < maxIndex) {
       highlighted.value++
       scrollToHighlighted()
     }
@@ -232,13 +251,14 @@ const onKeydown = (e: KeyboardEvent) => {
   } else if (e.key === 'Enter') {
     if (highlighted.value >= 0 && highlighted.value < filteredOptions.value.length) {
       select(filteredOptions.value[highlighted.value])
+    } else if (highlighted.value === filteredOptions.value.length && isCustomType.value) {
+      createCustomType()
     } else if (isCustomType.value) {
       createCustomType()
     }
     e.preventDefault()
   } else if (e.key === 'Escape') {
     close()
-    e.preventDefault()
   }
 }
 
@@ -262,7 +282,9 @@ const onOptionClick = (option: string) => {
 const scrollToHighlighted = () => {
   nextTick(() => {
     if (listRef.value && highlighted.value >= 0) {
-      const highlightedElement = listRef.value.children[highlighted.value] as HTMLElement
+      // Учитываем, что "+ Создать ..." находится после всех опций
+      const elementIndex = highlighted.value
+      const highlightedElement = listRef.value.children[elementIndex] as HTMLElement
       if (highlightedElement) {
         highlightedElement.scrollIntoView({ block: 'nearest' })
       }
@@ -284,6 +306,12 @@ const onKeyup = (e: KeyboardEvent) => {
   selectionStart.value = target.selectionStart || 0
   selectionEnd.value = target.selectionEnd || 0
 }
+
+defineExpose({
+  focus: () => {
+    inputRef.value?.focus()
+  }
+})
 </script>
 
 <template>
@@ -291,21 +319,15 @@ const onKeyup = (e: KeyboardEvent) => {
     <input
       ref="inputRef"
       class="input"
+      v-model="input"
       :placeholder="props.placeholder"
-      :value="input"
-      @focus="onFocus"
+      @focus="open"
       @input="onInput"
       @keydown="onKeydown"
-      @keyup="onKeyup"
-      @blur="onBlur"
       autocomplete="off"
+      spellcheck="false"
     />
-    <div
-      v-if="isOpen && (filteredOptions.length > 0 || isCustomType)"
-      class="list"
-      :style="{ maxHeight: `${props.maxVisible * 2.5}em`, overflowY: (filteredOptions.length > props.maxVisible || isCustomType) ? 'auto' : 'visible' }"
-      ref="listRef"
-    >
+    <div v-if="isOpen" class="list" ref="listRef">
       <div
         v-for="(option, idx) in filteredOptions"
         :key="option"
@@ -326,11 +348,11 @@ const onKeyup = (e: KeyboardEvent) => {
         data-option
       >
         <span class="custom-icon">+</span>
-        Создать "{{ input }}"
+        Создать "{{ createText }}"
       </div>
-    </div>
-    <div v-if="isOpen && filteredOptions.length === 0 && !isCustomType" class="empty">
-      Нет совпадений
+      <div v-if="isOpen && filteredOptions.length === 0 && !isCustomType" class="empty">
+        Нет совпадений
+      </div>
     </div>
   </div>
 </template>

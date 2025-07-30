@@ -370,9 +370,8 @@ ${values || '    // Нет значений'}
 }
 
 .container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+
+  // gap: 2rem;
   margin-bottom: 2rem;
 }
 

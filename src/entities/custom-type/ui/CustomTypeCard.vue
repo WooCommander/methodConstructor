@@ -27,7 +27,7 @@ const isEditing = ref(false)
 const newParameterName = ref('')
 const newParameterType = ref('')
 const newParameterDescription = ref('')
-const newParameterTypeRef = ref<HTMLInputElement>()
+const newParameterTypeRef = ref()
 
 // Для enum
 const newEnumName = ref('')
@@ -72,10 +72,7 @@ const changeType = (newType: CustomTypeKind) => {
 
 // Добавление параметра класса
 const addParameter = () => {
-  const existingNames = props.type.parameters.map((param: Parameter) => param.name)
-  const nameValidation = validateName(newParameterName.value.trim(), existingNames)
-  
-  if (nameValidation.isValid && newParameterType.value.trim()) {
+  if (newParameterName.value.trim() && newParameterType.value.trim()) {
     const updatedType = {
       ...props.type,
       parameters: [
@@ -94,13 +91,8 @@ const addParameter = () => {
     
     // Устанавливаем фокус на поле типа для следующего параметра
     nextTick(() => {
-      if (newParameterTypeRef.value) {
-        newParameterTypeRef.value.focus()
-      }
+      newParameterTypeRef.value?.focus?.()
     })
-  } else {
-    // Показать ошибку валидации
-    alert(nameValidation.error || 'Пожалуйста, заполните все обязательные поля')
   }
 }
 
@@ -126,10 +118,7 @@ const updateParameter = (index: number, field: 'name' | 'type' | 'description', 
 
 // Добавление значения enum
 const addEnumValue = () => {
-  const existingNames = props.type.enumValues.map((enumVal: EnumValue) => enumVal.name)
-  const nameValidation = validateName(newEnumName.value.trim(), existingNames)
-  
-  if (nameValidation.isValid) {
+  if (newEnumName.value.trim()) {
     // Автоматически определяем следующее значение
     let nextValue = 0
     if (props.type.enumValues.length > 0) {
@@ -150,9 +139,6 @@ const addEnumValue = () => {
     emit('updateType', updatedType)
     newEnumName.value = ''
     newEnumValue.value = ''
-  } else {
-    // Показать ошибку валидации
-    alert(nameValidation.error || 'Пожалуйста, введите корректное имя')
   }
 }
 
