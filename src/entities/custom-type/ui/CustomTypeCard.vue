@@ -219,13 +219,13 @@ const handleDragEnd = () => {
            >
              {{ isEditing ? '✓' : '✎' }}
            </button>
-           <button 
+           <!-- <button 
              class="action-btn delete-btn"
              @click.stop="emit('deleteType')"
              title="Удалить"
            >
              ×
-           </button>
+           </button> -->
          </div>
        </div>
      </div>

@@ -160,7 +160,8 @@ const select = (option: string) => {
           const placeholderPos = findPlaceholderPosition(option)
           if (placeholderPos) {
             inputRef.value.setSelectionRange(placeholderPos.start, placeholderPos.end)
-            // Открываем список для выбора
+            // Очищаем placeholderInput и открываем список для выбора
+            placeholderInput.value = ''
             setTimeout(() => {
               isOpen.value = true
               highlighted.value = 0
@@ -216,14 +217,20 @@ const createCustomType = () => {
 
 const onInput = (e: Event) => {
   const target = e.target as HTMLInputElement
-  if (isCursorInPlaceholder.value) {
-    placeholderInput.value = target.value
-  } else {
-    input.value = target.value
-  }
   cursorPosition.value = target.selectionStart || 0
   selectionStart.value = target.selectionStart || 0
   selectionEnd.value = target.selectionEnd || 0
+  
+  if (isCursorInPlaceholder.value) {
+    // Если курсор в многоточии, обновляем placeholderInput
+    const { before, after } = getTextAroundPlaceholder.value
+    const currentInput = target.value.substring(before.length, target.value.length - after.length)
+    placeholderInput.value = currentInput
+  } else {
+    // Обычный режим
+    input.value = target.value
+  }
+  
   isOpen.value = true
   highlighted.value = 0
 }
@@ -295,6 +302,8 @@ const scrollToHighlighted = () => {
 const onFocus = () => {
   // При фокусе проверяем, находится ли курсор в многоточии
   if (isCursorInPlaceholder.value) {
+    // Очищаем placeholderInput и показываем полный список
+    placeholderInput.value = ''
     open()
   }
 }
@@ -316,17 +325,17 @@ defineExpose({
 
 <template>
   <div class="autocomplete">
-    <input
-      ref="inputRef"
-      class="input"
-      v-model="input"
-      :placeholder="props.placeholder"
-      @focus="open"
-      @input="onInput"
-      @keydown="onKeydown"
-      autocomplete="off"
-      spellcheck="false"
-    />
+         <input
+       ref="inputRef"
+       class="input"
+       v-model="input"
+       :placeholder="props.placeholder"
+       @focus="onFocus"
+       @input="onInput"
+       @keydown="onKeydown"
+       autocomplete="off"
+       spellcheck="false"
+     />
     <div v-if="isOpen" class="list" ref="listRef">
       <div
         v-for="(option, idx) in filteredOptions"

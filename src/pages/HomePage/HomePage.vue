@@ -18,7 +18,7 @@ const baseTypes = [
   'string',
   'uuid',  
   'DateTime',
-  
+  'void',
   'List<...>',
   'Array<...>',
   'Nullable<...>',
@@ -246,38 +246,37 @@ ${values || '    // Нет значений'}
     <div class="container">
       <!-- Параметры метода -->
       <div class="method-params">
-        <h2 class="section-title">Параметры метода</h2>
         
         <div class="param-group">
-          <label class="label">Входящий параметр:</label>
+
           <InputAutocomplete
             v-model="inputParameter"
             :options="allTypes"
-            placeholder="Выберите или введите тип..."
+            placeholder="Тип запроса"
             :allow-custom="true"
             @create-custom="handleCreateCustomType"
           />
         </div>
         
         <div class="param-group">
-          <label class="label">Исходящий параметр:</label>
+          
           <InputAutocomplete
             v-model="outputParameter"
             :options="allTypes"
-            placeholder="Выберите или введите тип..."
+            placeholder="Тип ответа"
             :allow-custom="true"
             @create-custom="handleCreateCustomType"
           />
         </div>
         
-        <div class="selected-params">
+        <!-- <div class="selected-params">
           <div v-if="inputParameter" class="selected">
             <span>Входящий: <b>{{ inputParameter }}</b></span>
           </div>
           <div v-if="outputParameter" class="selected">
             <span>Исходящий: <b>{{ outputParameter }}</b></span>
           </div>
-        </div>
+        </div> -->
       </div>
       
       <!-- Сгенерированный код -->
@@ -289,10 +288,6 @@ ${values || '    // Нет значений'}
     
     <!-- Пользовательские типы -->
     <div class="custom-types">
-      <h2 class="section-title">
-        Пользовательские типы 
-        <span class="type-count">({{ customTypes.length }})</span>
-      </h2>
       
       <div v-if="customTypes.length === 0" class="no-types">
         Создайте пользовательский тип, введя его название в поле выше
@@ -336,10 +331,10 @@ ${values || '    // Нет значений'}
     </div>
 
     <!-- Код пользовательских типов -->
-    <div class="custom-types-code">
+    <!-- <div class="custom-types-code">
       <h2 class="section-title">Код пользовательских типов</h2>
       <pre class="code">{{ generateCustomTypesCode }}</pre>
-    </div>
+    </div> -->
 
     <!-- Сгенерированный JSON -->
     <div class="generated-json">
