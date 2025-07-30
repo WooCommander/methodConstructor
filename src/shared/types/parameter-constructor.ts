@@ -40,4 +40,44 @@ export type ConstructorState = {
   baseTypes: BaseType[]
   customTypes: CustomType[]
   methodParameters: MethodParameters
+}
+
+// Новые типы для JSON генерации
+export type JsonTypeInfo = {
+  Name: string
+  Namespace: string
+  IsGeneric: boolean
+  IsEnum: boolean
+  Generic?: JsonTypeInfo[]
+}
+
+export type JsonProperty = {
+  Name: string
+  Type: JsonTypeInfo
+  Description: string
+}
+
+export type JsonClass = {
+  Name: string
+  Namespace: string
+  Description?: string
+  Properties: JsonProperty[]
+}
+
+export type JsonEnumValue = {
+  Name: string
+  Value: number
+}
+
+export type JsonEnum = {
+  Name: string
+  Namespace: string
+  Value: JsonEnumValue[]
+}
+
+export type GeneratedJson = {
+  RequestType: string
+  ResponseType: string
+  Class: JsonClass[]
+  Enums: JsonEnum[]
 } 

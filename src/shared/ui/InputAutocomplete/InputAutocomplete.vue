@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{ 
   (e: 'update:modelValue', value: string | null): void
-  (e: 'createCustom', value: string): void
+  (e: 'createCustom', value: string, typeKind?: 'class' | 'enum'): void
 }>()
 
 const input = ref('')
@@ -181,7 +181,11 @@ const createCustomType = () => {
       }
     }
     
-    emit('createCustom', typeName)
+    // Определяем тип на основе имени
+    const isEnum = typeName.toLowerCase().includes('enum')
+    const typeKind = isEnum ? 'enum' : 'class'
+    
+    emit('createCustom', typeName, typeKind)
     emit('update:modelValue', input.value.trim())
     close()
   }

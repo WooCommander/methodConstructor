@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import InputAutocomplete from '@/shared/ui/InputAutocomplete/InputAutocomplete.vue'
 import CustomTypeCard from '@/entities/custom-type/ui/CustomTypeCard.vue'
+import { generateJson, exportJsonToFile } from '@/shared/lib/json-generator'
 
 // Базовые типы
 const baseTypes = [
@@ -50,15 +51,80 @@ const allTypes = computed(() => {
   return [...baseTypes, ...customTypeNames]
 })
 
+// Функция для извлечения всех типов из строки типа (включая generic)
+const extractTypesFromString = (typeString: string): string[] => {
+  const types: string[] = []
+  
+  // Регулярное выражение для поиска типов в generic конструкциях
+  // Ищет паттерны типа List<Type>, Nullable<Type>, Dictionary<Key, Value> и т.д.
+  const genericRegex = /<([^<>]+)>/g
+  let match
+  
+  // Извлекаем типы из generic конструкций
+  while ((match = genericRegex.exec(typeString)) !== null) {
+    const genericContent = match[1]
+    // Разделяем по запятой для случаев типа Dictionary<Key, Value>
+    const genericTypes = genericContent.split(',').map(t => t.trim())
+    types.push(...genericTypes)
+  }
+  
+  // Также добавляем основной тип (без generic части)
+  const baseType = typeString.replace(/<[^<>]*>/, '').trim()
+  if (baseType && !types.includes(baseType)) {
+    types.push(baseType)
+  }
+  
+  return types
+}
+
+// Определяем неиспользуемые типы
+const unusedTypes = computed(() => {
+  const usedTypes = new Set<string>()
+  
+  // Добавляем типы, используемые в параметрах метода
+  if (inputParameter.value) {
+    const inputTypes = extractTypesFromString(inputParameter.value)
+    inputTypes.forEach(type => usedTypes.add(type))
+  }
+  if (outputParameter.value) {
+    const outputTypes = extractTypesFromString(outputParameter.value)
+    outputTypes.forEach(type => usedTypes.add(type))
+  }
+  
+  // Добавляем типы, используемые в параметрах всех классов
+  customTypes.value.forEach(type => {
+    if (type.type === 'class') {
+      type.parameters.forEach(param => {
+        const paramTypes = extractTypesFromString(param.type)
+        paramTypes.forEach(paramType => {
+          if (customTypes.value.find(t => t.name === paramType)) {
+            usedTypes.add(paramType)
+          }
+        })
+      })
+    }
+  })
+  
+  return customTypes.value.filter(type => !usedTypes.has(type.name))
+})
+
 // Обработка создания пользовательского типа
-const handleCreateCustomType = (typeName: string) => {
+const handleCreateCustomType = (typeName: string, typeKind?: 'class' | 'enum') => {
   // Проверяем, что тип с таким именем еще не существует
   if (!customTypes.value.find(type => type.name === typeName)) {
+    // Определяем тип на основе имени или переданного параметра
+    let finalType: 'class' | 'enum' = 'class'
+    if (typeKind) {
+      finalType = typeKind
+    } else if (typeName.toLowerCase().includes('enum')) {
+      finalType = 'enum'
+    }
+    
     customTypes.value.push({
       name: typeName,
-      type: 'class', // По умолчанию создается как класс
+      type: finalType,
       parameters: [],
-      enumValues: []
+      enumValues: finalType === 'enum' ? [{ name: 'Value1', value: '0' }] : []
     })
   }
 }
@@ -112,6 +178,18 @@ const handleDragOver = (e: DragEvent, index: number) => {
 
 const handleDragLeave = () => {
   dragOverIndex.value = null
+}
+
+// Генерация и экспорт JSON
+const generatedJson = computed(() => {
+  return generateJson(customTypes.value, {
+    input: inputParameter.value,
+    output: outputParameter.value
+  })
+})
+
+const handleExportJson = () => {
+  exportJsonToFile(generatedJson.value, 'api-model.json')
 }
 
 // Генерация кода метода
@@ -246,6 +324,7 @@ ${values || '    // Нет значений'}
                      <CustomTypeCard
              :type="type"
              :all-types="allTypes"
+             :is-unused="unusedTypes.includes(type)"
              @update-type="handleUpdateCustomType"
              @delete-type="() => handleDeleteCustomType(type.name)"
              @create-custom-type="handleCreateCustomType"
@@ -257,10 +336,21 @@ ${values || '    // Нет значений'}
     </div>
 
     <!-- Код пользовательских типов -->
-    <!-- <div class="custom-types-code">
+    <div class="custom-types-code">
       <h2 class="section-title">Код пользовательских типов</h2>
       <pre class="code">{{ generateCustomTypesCode }}</pre>
-    </div> -->
+    </div>
+
+    <!-- Сгенерированный JSON -->
+    <div class="generated-json">
+      <div class="section-header">
+        <h2 class="section-title">Сгенерированный JSON</h2>
+        <button class="export-btn" @click="handleExportJson">
+          📥 Экспорт JSON
+        </button>
+      </div>
+      <pre class="code">{{ JSON.stringify(generatedJson, null, 2) }}</pre>
+    </div>
   </div>
 </template>
 
@@ -339,11 +429,36 @@ ${values || '    // Нет значений'}
 }
 
 .generated-code,
-.custom-types-code {
+.custom-types-code,
+.generated-json {
   background: #ffffff;
   border: 1px solid #f3f4f6;
   border-radius: 0.75rem;
   padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.export-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #2563eb;
+  }
 }
 
 .code {

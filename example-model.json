@@ -1,0 +1,356 @@
+{
+  "RequestType": "ApiControllerListRequest",
+  "ResponseType": "ApiControllerListResponse",
+  "Class": [
+    {
+      "Name": "ApiControllerListRequest",
+      "Namespace": "Wiki.Microservice.IServices.Models.ApiControllerService.Request",
+      "Properties": [
+        {
+          "Name": "ApiMicroserviceId",
+          "Type": {
+            "Name": "Guid",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "айди микросервиса"
+        },
+        {
+          "Name": "Page",
+          "Type": {
+            "Name": "PageRequest",
+            "Namespace": "PaginationHelper.Lib",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "настройка погинации"
+        },
+        {
+          "Name": "ProjectId",
+          "Type": {
+            "Name": "Int64",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "айди проекта"
+        },
+        {
+          "Name": "Search",
+          "Type": {
+            "Name": "String",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "поиск"
+        },
+        {
+          "Name": "ApiControllerId",
+          "Type": {
+            "Name": "Nullable`1",
+            "Namespace": "System",
+            "Generic": [
+              {
+                "Name": "Guid",
+                "Namespace": "System",
+                "IsGeneric": false,
+                "IsEnum": false
+              }
+            ],
+            "IsGeneric": true,
+            "IsEnum": false
+          },
+          "Description": "получение контроллера"
+        },
+        {
+          "Name": "Status",
+          "Type": {
+            "Name": "Nullable`1",
+            "Namespace": "System",
+            "Generic": [
+              {
+                "Name": "EnumApiMethodStatus",
+                "Namespace": "Wiki.DataEnums",
+                "IsGeneric": false,
+                "IsEnum": true
+              }
+            ],
+            "IsGeneric": true,
+            "IsEnum": false
+          },
+          "Description": "Статус"
+        },
+        {
+          "Name": "VersionId",
+          "Type": {
+            "Name": "Nullable`1",
+            "Namespace": "System",
+            "Generic": [
+              {
+                "Name": "Guid",
+                "Namespace": "System",
+                "IsGeneric": false,
+                "IsEnum": false
+              }
+            ],
+            "IsGeneric": true,
+            "IsEnum": false
+          },
+          "Description": "айди версии"
+        }
+      ]
+    },
+    {
+      "Name": "PageRequest",
+      "Namespace": "PaginationHelper.Lib",
+      "Properties": [
+        {
+          "Name": "Skip",
+          "Type": {
+            "Name": "Nullable`1",
+            "Namespace": "System",
+            "Generic": [
+              {
+                "Name": "Int64",
+                "Namespace": "System",
+                "IsGeneric": false,
+                "IsEnum": false
+              }
+            ],
+            "IsGeneric": true,
+            "IsEnum": false
+          }
+        },
+        {
+          "Name": "Take",
+          "Type": {
+            "Name": "Nullable`1",
+            "Namespace": "System",
+            "Generic": [
+              {
+                "Name": "Int64",
+                "Namespace": "System",
+                "IsGeneric": false,
+                "IsEnum": false
+              }
+            ],
+            "IsGeneric": true,
+            "IsEnum": false
+          }
+        }
+      ]
+    },
+    {
+      "Name": "ApiControllerListResponse",
+      "Namespace": "Wiki.Microservice.IServices.Models.ApiControllerService.Response",
+      "Properties": [
+        {
+          "Name": "Items",
+          "Type": {
+            "Name": "List`1",
+            "Namespace": "System.Collections.Generic",
+            "Generic": [
+              {
+                "Name": "ApiControllerListItem",
+                "Namespace": "Wiki.Microservice.IServices.Models.ApiControllerService",
+                "IsGeneric": false,
+                "IsEnum": false
+              }
+            ],
+            "IsGeneric": true,
+            "IsEnum": false
+          },
+          "Description": "список контроллеров"
+        },
+        {
+          "Name": "Page",
+          "Type": {
+            "Name": "PageResponse",
+            "Namespace": "PaginationHelper.Lib",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "доп данные"
+        }
+      ]
+    },
+    {
+      "Name": "ApiControllerListItem",
+      "Namespace": "Wiki.Microservice.IServices.Models.ApiControllerService",
+      "Description": "представление контроллера",
+      "Properties": [
+        {
+          "Name": "Id",
+          "Type": {
+            "Name": "Guid",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "айди"
+        },
+        {
+          "Name": "DateCreated",
+          "Type": {
+            "Name": "DateTime",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "дата создания"
+        },
+        {
+          "Name": "ControllerName",
+          "Type": {
+            "Name": "String",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "название контроллера"
+        },
+        {
+          "Name": "MicroserviceVersionId",
+          "Type": {
+            "Name": "Guid",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "айди микросервиса версии"
+        },
+        {
+          "Name": "MicroserviceName",
+          "Type": {
+            "Name": "String",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "название микросервиса"
+        },
+        {
+          "Name": "ImportType",
+          "Type": {
+            "Name": "EnumMicroserviceImportType",
+            "Namespace": "Wiki.DataEnums",
+            "IsGeneric": false,
+            "IsEnum": true
+          },
+          "Description": "тип микросервиса"
+        },
+        {
+          "Name": "Version",
+          "Type": {
+            "Name": "String",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "версия"
+        },
+        {
+          "Name": "Status",
+          "Type": {
+            "Name": "EnumApiMethodStatus",
+            "Namespace": "Wiki.DataEnums",
+            "IsGeneric": false,
+            "IsEnum": true
+          },
+          "Description": "Статус"
+        },
+        {
+          "Name": "Description",
+          "Type": {
+            "Name": "String",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          },
+          "Description": "Описание"
+        }
+      ]
+    },
+    {
+      "Name": "PageResponse",
+      "Namespace": "PaginationHelper.Lib",
+      "Properties": [
+        {
+          "Name": "Current",
+          "Type": {
+            "Name": "Int64",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          }
+        },
+        {
+          "Name": "Size",
+          "Type": {
+            "Name": "Int64",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          }
+        },
+        {
+          "Name": "Count",
+          "Type": {
+            "Name": "Int64",
+            "Namespace": "System",
+            "IsGeneric": false,
+            "IsEnum": false
+          }
+        }
+      ]
+    }
+  ],
+  "Enums": [
+    {
+      "Name": "EnumApiMethodStatus",
+      "Namespace": "Wiki.DataEnums",
+      "Value": [
+        {
+          "Name": "Planned",
+          "Value": 0
+        },
+        {
+          "Name": "Changed",
+          "Value": 1
+        },
+        {
+          "Name": "Conflict",
+          "Value": 2
+        },
+        {
+          "Name": "Completed",
+          "Value": 3
+        },
+        {
+          "Name": "Deleted",
+          "Value": 4
+        },
+        {
+          "Name": "ConflictDeleted",
+          "Value": 5
+        }
+      ]
+    },
+    {
+      "Name": "EnumMicroserviceImportType",
+      "Namespace": "Wiki.DataEnums",
+      "Value": [
+        {
+          "Name": "Schema",
+          "Value": 0
+        },
+        {
+          "Name": "Suggest",
+          "Value": 1
+        }
+      ]
+    }
+  ]
+} 

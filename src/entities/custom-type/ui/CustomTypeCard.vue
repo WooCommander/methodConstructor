@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import InputAutocomplete from '@/shared/ui/InputAutocomplete/InputAutocomplete.vue'
-import type { CustomType, Parameter, EnumValue, CustomTypeKind } from './types'
+import type { CustomType, Parameter, EnumValue, CustomTypeKind } from '@/shared/types/parameter-constructor'
 import { validateCustomType } from '../lib/validators'
 
 type Props = {
   type: CustomType
   allTypes: string[]
+  isUnused?: boolean
 }
 
 const props = defineProps<Props>()
@@ -26,6 +27,7 @@ const isEditing = ref(false)
 const newParameterName = ref('')
 const newParameterType = ref('')
 const newParameterDescription = ref('')
+const newParameterTypeRef = ref<HTMLInputElement>()
 
 // Для enum
 const newEnumName = ref('')
@@ -33,6 +35,27 @@ const newEnumValue = ref('')
 
 // Валидация
 const validation = computed(() => validateCustomType(props.type))
+
+// Валидация имени параметра/enum значения
+const validateName = (name: string, existingNames: string[]): { isValid: boolean; error?: string } => {
+  if (!name.trim()) {
+    return { isValid: false, error: 'Имя не может быть пустым' }
+  }
+  
+  if (name.includes(' ')) {
+    return { isValid: false, error: 'Имя не может содержать пробелы' }
+  }
+  
+  if (/^\d/.test(name)) {
+    return { isValid: false, error: 'Имя не может начинаться с цифры' }
+  }
+  
+  if (existingNames.includes(name)) {
+    return { isValid: false, error: 'Имя уже используется' }
+  }
+  
+  return { isValid: true }
+}
 
 // Изменение типа (class/enum)
 const changeType = (newType: CustomTypeKind) => {
@@ -49,7 +72,10 @@ const changeType = (newType: CustomTypeKind) => {
 
 // Добавление параметра класса
 const addParameter = () => {
-  if (newParameterName.value.trim() && newParameterType.value.trim()) {
+  const existingNames = props.type.parameters.map((param: Parameter) => param.name)
+  const nameValidation = validateName(newParameterName.value.trim(), existingNames)
+  
+  if (nameValidation.isValid && newParameterType.value.trim()) {
     const updatedType = {
       ...props.type,
       parameters: [
@@ -65,6 +91,16 @@ const addParameter = () => {
     newParameterName.value = ''
     newParameterType.value = ''
     newParameterDescription.value = ''
+    
+    // Устанавливаем фокус на поле типа для следующего параметра
+    nextTick(() => {
+      if (newParameterTypeRef.value) {
+        newParameterTypeRef.value.focus()
+      }
+    })
+  } else {
+    // Показать ошибку валидации
+    alert(nameValidation.error || 'Пожалуйста, заполните все обязательные поля')
   }
 }
 
@@ -90,20 +126,33 @@ const updateParameter = (index: number, field: 'name' | 'type' | 'description', 
 
 // Добавление значения enum
 const addEnumValue = () => {
-  if (newEnumName.value.trim() && newEnumValue.value.trim()) {
+  const existingNames = props.type.enumValues.map((enumVal: EnumValue) => enumVal.name)
+  const nameValidation = validateName(newEnumName.value.trim(), existingNames)
+  
+  if (nameValidation.isValid) {
+    // Автоматически определяем следующее значение
+    let nextValue = 0
+    if (props.type.enumValues.length > 0) {
+      const maxValue = Math.max(...props.type.enumValues.map((v: EnumValue) => parseInt(v.value) || 0))
+      nextValue = maxValue + 1
+    }
+    
     const updatedType = {
       ...props.type,
       enumValues: [
         ...props.type.enumValues,
         {
           name: newEnumName.value.trim(),
-          value: newEnumValue.value.trim()
+          value: nextValue.toString()
         }
       ]
     }
     emit('updateType', updatedType)
     newEnumName.value = ''
     newEnumValue.value = ''
+  } else {
+    // Показать ошибку валидации
+    alert(nameValidation.error || 'Пожалуйста, введите корректное имя')
   }
 }
 
@@ -146,13 +195,16 @@ const handleDragEnd = () => {
 </script>
 
 <template>
-  <div 
-    class="card" 
-    :class="{ 'card--invalid': !validation.isValid }"
-    draggable="true"
-    @dragstart="handleDragStart"
-    @dragend="handleDragEnd"
-  >
+     <div 
+     class="card" 
+     :class="{ 
+       'card--invalid': !validation.isValid,
+       'card--unused': props.isUnused 
+     }"
+     draggable="true"
+     @dragstart="handleDragStart"
+     @dragend="handleDragEnd"
+   >
          <div class="header">
        <div class="title" @click="isExpanded = !isExpanded">
          <span class="drag-handle">⋮⋮</span>
@@ -256,6 +308,7 @@ const handleDragEnd = () => {
         
         <div v-if="isEditing" class="add-item">
           <InputAutocomplete
+            ref="newParameterTypeRef"
             class="param-type-input"
             :model-value="newParameterType"
             :options="allTypes"
@@ -377,6 +430,12 @@ const handleDragEnd = () => {
   &--invalid {
     border-color: #ef4444;
     background: #fef2f2;
+  }
+
+  &--unused {
+    opacity: 0.6;
+    background: #f9fafb;
+    border-color: #d1d5db;
   }
 
   &.dragging {
