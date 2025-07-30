@@ -89,7 +89,8 @@ const isCustomType = computed(() => {
   }
   if (!props.allowCustom) return false
   if (!search) return false
-  return !props.options.includes(search) && search.trim().length > 0
+  // Проверяем, что имя не существует в списке и является валидным
+  return !props.options.includes(search) && search.trim().length > 0 && validateTypeName(search)
 })
 
 const createText = computed(() => {
@@ -173,20 +174,25 @@ const select = (option: string) => {
   }
 }
 
+// Функция валидации имени типа
+const validateTypeName = (name: string): boolean => {
+  // Имя должно начинаться с буквы или подчеркивания и содержать только буквы, цифры и подчеркивания
+  const validNamePattern = /^[A-Za-z_][A-Za-z0-9_]*$/
+  return validNamePattern.test(name) && name.trim().length > 0
+}
+
 const createCustomType = () => {
   let typeName = ''
   
   if (isCursorInPlaceholder.value) {
-    // Если курсор в многоточии, берем текст из многоточия
-    const { before, after } = getTextAroundPlaceholder.value
-    const currentInput = props.modelValue?.substring(before.length, props.modelValue.length - after.length) || ''
-    typeName = currentInput.trim()
+    // Если курсор в многоточии, берем текст из placeholderInput
+    typeName = placeholderInput.value.trim()
   } else {
     // Обычный режим
     typeName = input.value.trim()
   }
   
-  if (typeName) {
+  if (typeName && validateTypeName(typeName)) {
     // Извлекаем базовый тип из generic конструкций
     const genericPattern = /^(List|Array|Map|Set|Task|Nullable)<(.+?)>$/i
     const match = typeName.match(genericPattern)
@@ -196,6 +202,11 @@ const createCustomType = () => {
       if (innerMatch) {
         typeName = innerMatch[1]
       }
+    }
+    
+    // Проверяем валидность извлеченного имени
+    if (!validateTypeName(typeName)) {
+      return // Не создаем тип с невалидным именем
     }
     
     const isEnum = typeName.toLowerCase().includes('enum')
@@ -208,6 +219,7 @@ const createCustomType = () => {
       const newValue = before + typeName + after
       emit('update:modelValue', newValue)
       input.value = newValue
+      placeholderInput.value = ''
     } else {
       emit('update:modelValue', input.value.trim())
     }
