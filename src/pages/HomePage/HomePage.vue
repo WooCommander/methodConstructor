@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import InputAutocomplete from '@/shared/ui/InputAutocomplete/InputAutocomplete.vue'
-import CustomTypeCard from '@/shared/ui/CustomTypeCard/CustomTypeCard.vue'
+import CustomTypeCard from '@/entities/custom-type/ui/CustomTypeCard.vue'
 
 // Базовые типы
 const baseTypes = [
@@ -82,6 +82,36 @@ const handleDeleteCustomType = (typeName: string) => {
   if (outputParameter.value === typeName) {
     outputParameter.value = null
   }
+}
+
+// Состояние перетаскивания
+const draggedTypeName = ref<string | null>(null)
+const dragOverIndex = ref<number | null>(null)
+
+// Переупорядочивание пользовательских типов
+const handleReorderTypes = (newOrder: any[]) => {
+  customTypes.value = newOrder
+}
+
+// Обработчики перетаскивания
+const handleDragStart = (typeName: string) => {
+  draggedTypeName.value = typeName
+}
+
+const handleDragEnd = () => {
+  draggedTypeName.value = null
+  dragOverIndex.value = null
+}
+
+const handleDragOver = (e: DragEvent, index: number) => {
+  e.preventDefault()
+  if (draggedTypeName.value && draggedTypeName.value !== customTypes.value[index]?.name) {
+    dragOverIndex.value = index
+  }
+}
+
+const handleDragLeave = () => {
+  dragOverIndex.value = null
 }
 
 // Генерация кода метода
@@ -173,10 +203,10 @@ ${values || '    // Нет значений'}
       </div>
       
       <!-- Сгенерированный код -->
-      <div class="generated-code">
+      <!-- <div class="generated-code">
         <h2 class="section-title">Сгенерированный код</h2>
         <pre class="code">{{ generatedCode }}</pre>
-      </div>
+      </div> -->
     </div>
     
     <!-- Пользовательские типы -->
@@ -191,23 +221,46 @@ ${values || '    // Нет значений'}
       </div>
       
       <div v-else class="types-list">
-        <CustomTypeCard
-          v-for="type in customTypes"
-          :key="type.name"
-          :type="type"
-          :all-types="allTypes"
-          @update-type="handleUpdateCustomType"
-          @delete-type="() => handleDeleteCustomType(type.name)"
-          @create-custom-type="handleCreateCustomType"
-        />
+                 <div
+           v-for="(type, index) in customTypes"
+           :key="type.name"
+           class="type-wrapper"
+           :class="{ 'drag-over': dragOverIndex === index }"
+           @dragover="handleDragOver($event, index)"
+           @drop="(e) => {
+             e.preventDefault()
+             const draggedName = e.dataTransfer?.getData('text/plain')
+             if (draggedName && draggedName !== type.name) {
+               const draggedIndex = customTypes.findIndex(t => t.name === draggedName)
+               if (draggedIndex !== -1 && draggedIndex !== index) {
+                 const newOrder = [...customTypes]
+                 const [draggedItem] = newOrder.splice(draggedIndex, 1)
+                 newOrder.splice(index, 0, draggedItem)
+                 handleReorderTypes(newOrder)
+               }
+             }
+             handleDragEnd()
+           }"
+           @dragleave="handleDragLeave"
+         >
+                     <CustomTypeCard
+             :type="type"
+             :all-types="allTypes"
+             @update-type="handleUpdateCustomType"
+             @delete-type="() => handleDeleteCustomType(type.name)"
+             @create-custom-type="handleCreateCustomType"
+             @drag-start="handleDragStart"
+             @drag-end="handleDragEnd"
+           />
+        </div>
       </div>
     </div>
 
     <!-- Код пользовательских типов -->
-    <div class="custom-types-code">
+    <!-- <div class="custom-types-code">
       <h2 class="section-title">Код пользовательских типов</h2>
       <pre class="code">{{ generateCustomTypesCode }}</pre>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -329,6 +382,20 @@ ${values || '    // Нет значений'}
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.type-wrapper {
+  transition: all 0.2s ease;
+  
+  &.drag-over {
+    transform: translateY(2px);
+    
+    .card {
+      border-color: #3b82f6;
+      background: #f0f9ff;
+      box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+    }
+  }
 }
 
 @media (max-width: 768px) {

@@ -91,7 +91,7 @@ const exportAllCode = () => {
     </div>
 
     <!-- Код пользовательских типов -->
-    <div class="code-section">
+    <!-- <div class="code-section">
       <div class="code-header">
         <h2 class="section-title">Код пользовательских типов</h2>
         <div class="code-actions">
@@ -112,7 +112,7 @@ const exportAllCode = () => {
         </div>
       </div>
       <pre class="code">{{ customTypesCode }}</pre>
-    </div>
+    </div> -->
 
     <!-- Экспорт всего кода -->
     <div class="export-all">

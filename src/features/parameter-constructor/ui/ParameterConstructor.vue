@@ -68,6 +68,11 @@ const handleDeleteCustomType = (typeName: string) => {
   emitUpdate()
 }
 
+const handleReorderTypes = (newOrder: CustomType[]) => {
+  customTypes.value = newOrder
+  emitUpdate()
+}
+
 const emitUpdate = () => {
   emit('update', {
     customTypes: customTypes.value,
@@ -125,6 +130,7 @@ defineExpose({
       @update-type="handleUpdateCustomType"
       @delete-type="handleDeleteCustomType"
       @create-custom-type="handleCreateCustomType"
+      @reorder-types="handleReorderTypes"
     />
   </div>
 </template>

@@ -162,7 +162,26 @@ const select = (option: string) => {
 
 const createCustomType = () => {
   if (input.value.trim()) {
-    emit('createCustom', input.value.trim())
+    // Извлекаем имя типа из конструкций типа List<MyClass> или Array<MyClass>
+    let typeName = input.value.trim()
+    
+    // Ищем паттерны типа List<...>, Array<...>, Map<...>, Set<...>, Task<...>, Nullable<...>
+    const genericPattern = /^(List|Array|Map|Set|Task|Nullable)<(.+?)>$/i
+    const match = typeName.match(genericPattern)
+    
+    if (match) {
+      // Извлекаем содержимое внутри угловых скобок
+      typeName = match[2].trim()
+      
+      // Если внутри еще есть вложенные конструкции, берем только первое слово
+      // Например, из List<MyClass<Something>> извлекаем MyClass
+      const innerMatch = typeName.match(/^([A-Za-z_][A-Za-z0-9_]*)/)
+      if (innerMatch) {
+        typeName = innerMatch[1]
+      }
+    }
+    
+    emit('createCustom', typeName)
     emit('update:modelValue', input.value.trim())
     close()
   }

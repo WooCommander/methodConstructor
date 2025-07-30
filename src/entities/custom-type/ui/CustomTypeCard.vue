@@ -15,6 +15,8 @@ const emit = defineEmits<{
   (e: 'createCustomType', typeName: string): void
   (e: 'updateType', updatedType: CustomType): void
   (e: 'deleteType'): void
+  (e: 'dragStart', typeName: string): void
+  (e: 'dragEnd'): void
 }>()
 
 const isExpanded = ref(false)
@@ -128,38 +130,67 @@ const updateEnumValue = (index: number, field: 'name' | 'value', value: string) 
 const handleCreateCustomType = (typeName: string) => {
   emit('createCustomType', typeName)
 }
+
+// Обработчики перетаскивания
+const handleDragStart = (e: DragEvent) => {
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', props.type.name)
+  }
+  emit('dragStart', props.type.name)
+}
+
+const handleDragEnd = () => {
+  emit('dragEnd')
+}
 </script>
 
 <template>
-  <div class="card" :class="{ 'card--invalid': !validation.isValid }">
-    <div class="header" @click="isExpanded = !isExpanded">
-      <div class="title">
-        <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
-        <span class="type-badge" :class="`type-${type.type}`">
-          {{ type.type === 'class' ? 'class' : 'enum' }}
-        </span>
-        <span class="type-name">{{ type.name }}</span>
-        <span class="parameter-count">
-          ({{ type.type === 'class' ? type.parameters.length + ' параметров' : type.enumValues.length + ' значений' }})
-        </span>
-      </div>
-      <div class="actions">
-        <button 
-          class="action-btn"
-          @click.stop="isEditing = !isEditing"
-          :title="isEditing ? 'Сохранить' : 'Редактировать'"
-        >
-          {{ isEditing ? '✓' : '✎' }}
-        </button>
-        <button 
-          class="action-btn delete-btn"
-          @click.stop="emit('deleteType')"
-          title="Удалить"
-        >
-          ×
-        </button>
-      </div>
-    </div>
+  <div 
+    class="card" 
+    :class="{ 'card--invalid': !validation.isValid }"
+    draggable="true"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
+  >
+         <div class="header">
+       <div class="title" @click="isExpanded = !isExpanded">
+         <span class="drag-handle">⋮⋮</span>
+         <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
+         <!-- Переключатель типа -->
+         <select 
+           class="type-select"
+           :value="type.type"
+           @change="(e) => changeType((e.target as HTMLSelectElement).value as 'class' | 'enum')"
+           @click.stop
+         >
+           <option value="class">Class</option>
+           <option value="enum">Enum</option>
+         </select>
+         <span class="type-name">{{ type.name }}</span>
+         <span class="parameter-count">
+           ({{ type.type === 'class' ? type.parameters.length + ' параметров' : type.enumValues.length + ' значений' }})
+         </span>
+       </div>
+       <div class="header-controls">
+         <div class="actions">
+           <button 
+             class="action-btn"
+             @click.stop="isEditing = !isEditing"
+             :title="isEditing ? 'Сохранить' : 'Редактировать'"
+           >
+             {{ isEditing ? '✓' : '✎' }}
+           </button>
+           <button 
+             class="action-btn delete-btn"
+             @click.stop="emit('deleteType')"
+             title="Удалить"
+           >
+             ×
+           </button>
+         </div>
+       </div>
+     </div>
     
     <!-- Ошибки валидации -->
     <div v-if="!validation.isValid" class="validation-errors">
@@ -169,23 +200,6 @@ const handleCreateCustomType = (typeName: string) => {
     </div>
     
     <div v-if="isExpanded" class="content">
-      <!-- Переключатель типа -->
-      <div class="type-selector">
-        <button 
-          class="type-btn"
-          :class="{ active: type.type === 'class' }"
-          @click="changeType('class')"
-        >
-          Class
-        </button>
-        <button 
-          class="type-btn"
-          :class="{ active: type.type === 'enum' }"
-          @click="changeType('enum')"
-        >
-          Enum
-        </button>
-      </div>
 
       <!-- Содержимое для класса -->
       <div v-if="type.type === 'class'">
@@ -348,16 +362,31 @@ const handleCreateCustomType = (typeName: string) => {
   border: 1px solid #f3f4f6;
   border-radius: 0.75rem;
   margin-bottom: 1rem;
-  overflow: hidden;
   transition: all 0.2s ease;
+  cursor: grab;
+  position: relative;
 
   &:hover {
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   }
 
+  &:active {
+    cursor: grabbing;
+  }
+
   &--invalid {
     border-color: #ef4444;
     background: #fef2f2;
+  }
+
+  &.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+  }
+
+  &.drag-over {
+    border-color: #3b82f6;
+    background: #f0f9ff;
   }
 }
 
@@ -379,6 +408,18 @@ const handleCreateCustomType = (typeName: string) => {
   align-items: center;
   gap: 0.5rem;
   flex: 1;
+}
+
+.drag-handle {
+  color: #9ca3af;
+  font-size: 1rem;
+  cursor: grab;
+  user-select: none;
+  margin-right: 0.5rem;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .expand-icon {
@@ -413,6 +454,35 @@ const handleCreateCustomType = (typeName: string) => {
 .parameter-count {
   color: #6b7280;
   font-size: 0.875rem;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.type-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 0.5rem;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+  }
+
+  &:hover {
+    border-color: #d1d5db;
+  }
 }
 
 .actions {
@@ -468,35 +538,10 @@ const handleCreateCustomType = (typeName: string) => {
 .content {
   border-top: 1px solid #f3f4f6;
   padding: 1rem;
+  overflow: visible;
 }
 
-.type-selector {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f3f4f6;
-}
 
-.type-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid #f3f4f6;
-  border-radius: 0.25rem;
-  background: #ffffff;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: #f9fafb;
-  }
-
-  &.active {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-  }
-}
 
 .no-items {
   color: #6b7280;
