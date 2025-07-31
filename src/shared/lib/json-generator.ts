@@ -28,6 +28,18 @@ const baseTypeMapping: Record<string, { name: string; namespace: string; isEnum:
 
 // Функция для парсинга типа и извлечения информации о generic типах
 function parseType(typeString: string): JsonTypeInfo {
+  // Проверяем nullable тип (Type?)
+  if (typeString.endsWith('?')) {
+    const baseType = typeString.slice(0, -1).trim()
+    return {
+      Name: 'Nullable`1',
+      Namespace: 'System',
+      IsGeneric: true,
+      IsEnum: false,
+      Generic: [parseType(baseType)]
+    }
+  }
+  
   // Проверяем, является ли это generic типом
   const genericMatch = typeString.match(/^(\w+)<(.+)>$/i)
   

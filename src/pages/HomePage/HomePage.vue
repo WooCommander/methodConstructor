@@ -21,7 +21,7 @@ const baseTypes = [
   'void',
   'List<...>',
   'Array<...>',
-  'Nullable<...>',
+  
   'Task<...>',
   
 ]
@@ -34,11 +34,14 @@ const customTypes = ref<Array<{
     name: string
     type: string
     description: string
+    isNullable?: boolean
   }>
   enumValues: Array<{
     name: string
     value: string
   }>
+  namespace?: string
+  baseType?: string
 }>>([])
 
 // Параметры метода
@@ -51,9 +54,21 @@ const allTypes = computed(() => {
   return [...baseTypes, ...customTypeNames]
 })
 
+// Функция для парсинга nullable типов (Type? -> Nullable<Type>)
+const parseNullableType = (typeString: string): { baseType: string; isNullable: boolean } => {
+  if (typeString.endsWith('?')) {
+    const baseType = typeString.slice(0, -1).trim()
+    return { baseType, isNullable: true }
+  }
+  return { baseType: typeString, isNullable: false }
+}
+
 // Функция для извлечения всех типов из строки типа (включая generic)
 const extractTypesFromString = (typeString: string): string[] => {
   const types: string[] = []
+  
+  // Сначала парсим nullable тип
+  const { baseType } = parseNullableType(typeString)
   
   // Регулярное выражение для поиска типов в generic конструкциях
   // Ищет паттерны типа List<Type>, Nullable<Type>, Dictionary<Key, Value> и т.д.
@@ -61,17 +76,17 @@ const extractTypesFromString = (typeString: string): string[] => {
   let match
   
   // Извлекаем типы из generic конструкций
-  while ((match = genericRegex.exec(typeString)) !== null) {
+  while ((match = genericRegex.exec(baseType)) !== null) {
     const genericContent = match[1]
     // Разделяем по запятой для случаев типа Dictionary<Key, Value>
     const genericTypes = genericContent.split(',').map(t => t.trim())
     types.push(...genericTypes)
   }
   
-  // Также добавляем основной тип (без generic части)
-  const baseType = typeString.replace(/<[^<>]*>/, '').trim()
-  if (baseType && !types.includes(baseType)) {
-    types.push(baseType)
+  // Также добавляем основной тип (без generic части), но только если это не generic тип
+  const cleanBaseType = baseType.replace(/<[^<>]*>/, '').trim()
+  if (cleanBaseType && !types.includes(cleanBaseType) && !baseType.includes('<')) {
+    types.push(cleanBaseType)
   }
   
   return types

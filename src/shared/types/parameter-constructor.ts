@@ -10,6 +10,7 @@ export type BaseType =
   | 'Array<...>'
   | 'Map<...>'
   | 'Set<...>'
+  | 'Nullable<...>'
 
 export type CustomTypeKind = 'class' | 'enum'
 
@@ -17,6 +18,7 @@ export type Parameter = {
   name: string
   type: string
   description: string
+  isNullable?: boolean
 }
 
 export type EnumValue = {
@@ -29,6 +31,8 @@ export type CustomType = {
   type: CustomTypeKind
   parameters: Parameter[]
   enumValues: EnumValue[]
+  namespace?: string
+  baseType?: string
 }
 
 export type MethodParameters = {

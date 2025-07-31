@@ -49,7 +49,24 @@ const isCursorInPlaceholder = computed(() => {
   const placeholder = findPlaceholderPosition(props.modelValue)
   if (!placeholder) return false
   
-  return cursorPosition.value >= placeholder.start && cursorPosition.value <= placeholder.end
+  // Более гибкая проверка - курсор может быть в пределах многоточия или после него
+  // но до закрывающей скобки >
+  const isInPlaceholder = cursorPosition.value >= placeholder.start && cursorPosition.value <= placeholder.end
+  
+  // Также проверяем, есть ли текст в placeholderInput (это означает, что мы редактируем многоточие)
+  const hasPlaceholderInput = placeholderInput.value.length > 0
+  
+  // Отладочная информация
+  console.log('isCursorInPlaceholder debug:', {
+    modelValue: props.modelValue,
+    placeholder,
+    cursorPosition: cursorPosition.value,
+    isInPlaceholder,
+    hasPlaceholderInput,
+    placeholderInput: placeholderInput.value
+  })
+  
+  return isInPlaceholder || hasPlaceholderInput
 })
 
 // Получаем текст до и после многоточия
@@ -75,8 +92,20 @@ const filteredOptions = computed(() => {
     search = input.value
   }
   if (!search) return props.options
+  
+  // Убираем "?" для поиска
+  const cleanSearch = search.endsWith('?') ? search.slice(0, -1).trim() : search.trim()
+  
+  // Если курсор в многоточии и введен текст, показываем только точные совпадения
+  if (isCursorInPlaceholder.value && cleanSearch) {
+    return props.options.filter(opt =>
+      opt.toLowerCase() === cleanSearch.toLowerCase()
+    )
+  }
+  
+  // Поиск с начала строки (startsWith)
   return props.options.filter(opt =>
-    opt.toLowerCase().includes(search.toLowerCase())
+    opt.toLowerCase().startsWith(cleanSearch.toLowerCase())
   )
 })
 
@@ -89,8 +118,27 @@ const isCustomType = computed(() => {
   }
   if (!props.allowCustom) return false
   if (!search) return false
+  
+  // Убираем "?" для проверки существования в списке
+  const cleanSearch = search.endsWith('?') ? search.slice(0, -1).trim() : search.trim()
+  
   // Проверяем, что имя не существует в списке и является валидным
-  return !props.options.includes(search) && search.trim().length > 0 && validateTypeName(search)
+  const result = !props.options.includes(cleanSearch) && cleanSearch.length > 0 && validateTypeName(search)
+  
+  // Временная отладка
+  if (isCursorInPlaceholder.value && search) {
+    console.log('isCustomType debug:', {
+      search,
+      cleanSearch,
+      notInOptions: !props.options.includes(cleanSearch),
+      hasLength: cleanSearch.length > 0,
+      isValid: validateTypeName(search),
+      options: props.options,
+      result
+    })
+  }
+  
+  return result
 })
 
 const createText = computed(() => {
@@ -176,9 +224,12 @@ const select = (option: string) => {
 
 // Функция валидации имени типа
 const validateTypeName = (name: string): boolean => {
+  // Убираем "?" для проверки основного имени
+  const cleanName = name.endsWith('?') ? name.slice(0, -1).trim() : name.trim()
+  
   // Имя должно начинаться с буквы или подчеркивания и содержать только буквы, цифры и подчеркивания
   const validNamePattern = /^[A-Za-z_][A-Za-z0-9_]*$/
-  return validNamePattern.test(name) && name.trim().length > 0
+  return validNamePattern.test(cleanName) && cleanName.length > 0
 }
 
 const createCustomType = () => {
@@ -202,6 +253,11 @@ const createCustomType = () => {
       if (innerMatch) {
         typeName = innerMatch[1]
       }
+    }
+    
+    // Убираем "?" если есть
+    if (typeName.endsWith('?')) {
+      typeName = typeName.slice(0, -1).trim()
     }
     
     // Проверяем валидность извлеченного имени
@@ -233,11 +289,24 @@ const onInput = (e: Event) => {
   selectionStart.value = target.selectionStart || 0
   selectionEnd.value = target.selectionEnd || 0
   
-  if (isCursorInPlaceholder.value) {
-    // Если курсор в многоточии, обновляем placeholderInput
+  // Проверяем, есть ли многоточие в значении
+  const hasPlaceholder = props.modelValue && props.modelValue.includes('...')
+  
+  if (hasPlaceholder) {
+    // Если есть многоточие, пытаемся извлечь текст из него
     const { before, after } = getTextAroundPlaceholder.value
     const currentInput = target.value.substring(before.length, target.value.length - after.length)
     placeholderInput.value = currentInput
+    
+    // Отладочная информация
+    console.log('onInput debug:', {
+      targetValue: target.value,
+      before,
+      after,
+      currentInput,
+      placeholderInput: placeholderInput.value,
+      cursorPosition: cursorPosition.value
+    })
   } else {
     // Обычный режим
     input.value = target.value
