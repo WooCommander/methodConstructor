@@ -33,6 +33,8 @@ export type CustomType = {
   enumValues: EnumValue[]
   namespace?: string
   baseType?: string
+  parentType?: string
+  isNullable?: boolean
 }
 
 export type MethodParameters = {

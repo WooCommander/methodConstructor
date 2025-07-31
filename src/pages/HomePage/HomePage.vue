@@ -283,25 +283,7 @@ ${values || '    // Нет значений'}
             @create-custom="handleCreateCustomType"
           />
         </div>
-        
-        <!-- <div class="selected-params">
-          <div v-if="inputParameter" class="selected">
-            <span>Входящий: <b>{{ inputParameter }}</b></span>
-          </div>
-          <div v-if="outputParameter" class="selected">
-            <span>Исходящий: <b>{{ outputParameter }}</b></span>
-          </div>
-        </div> -->
-      </div>
-      
-      <!-- Сгенерированный код -->
-      <!-- <div class="generated-code">
-        <h2 class="section-title">Сгенерированный код</h2>
-        <pre class="code">{{ generatedCode }}</pre>
-      </div> -->
-    </div>
-    
-    <!-- Пользовательские типы -->
+            <!-- Пользовательские типы -->
     <div class="custom-types">
       
       <div v-if="customTypes.length === 0" class="no-types">
@@ -344,6 +326,13 @@ ${values || '    // Нет значений'}
         </div>
       </div>
     </div>
+
+      </div>
+      
+
+    </div>
+    
+
 
     <!-- Код пользовательских типов -->
     <!-- <div class="custom-types-code">
@@ -489,7 +478,7 @@ ${values || '    // Нет значений'}
   background: #ffffff;
   border: 1px solid #f3f4f6;
   border-radius: 0.75rem;
-  padding: 1.5rem;
+  // padding: 1.5rem;
   margin-bottom: 2rem;
 }
 
@@ -505,7 +494,7 @@ ${values || '    // Нет значений'}
 .types-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  // gap: 1rem;
 }
 
 .type-wrapper {

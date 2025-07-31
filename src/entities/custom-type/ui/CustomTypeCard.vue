@@ -194,7 +194,7 @@ const handleDragEnd = () => {
          <div class="header">
        <div class="title" @click="isExpanded = !isExpanded">
          <span class="drag-handle">⋮⋮</span>
-         <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
+         <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span> 
          <!-- Переключатель типа -->
          <select 
            class="type-select"
@@ -202,13 +202,13 @@ const handleDragEnd = () => {
            @change="(e) => changeType((e.target as HTMLSelectElement).value as 'class' | 'enum')"
            @click.stop
          >
-           <option value="class">Class</option>
-           <option value="enum">Enum</option>
+           <option value="class">class</option>
+           <option value="enum">enum</option>
          </select>
-         <span class="type-name">{{ type.name }}</span>
-         <span class="parameter-count">
+         <span class="type-name">{{ type.name }}</span> :<span class="type-name" :class="{'is-not-exist':!type.parentType}" >{{ type.parentType||"Базовый тип" }}</span>
+         <!-- <span class="parameter-count">
            ({{ type.type === 'class' ? type.parameters.length + ' параметров' : type.enumValues.length + ' значений' }})
-         </span>
+         </span> -->
        </div>
        <div class="header-controls">
          <div class="actions">
@@ -253,6 +253,7 @@ const handleDragEnd = () => {
           >
             <InputAutocomplete
               v-if="isEditing"
+              :isSimpleMode="true"
               class="param-type-input"
               :model-value="param.type"
               :options="allTypes"
@@ -261,7 +262,7 @@ const handleDragEnd = () => {
               @update:model-value="updateParameter(index, 'type', $event || '')"
               @create-custom="handleCreateCustomType"
             />
-            <span v-else class="param-type">{{ param.type }}</span>
+            <span v-else class="param-type" :title="param.type">{{ param.type }}</span>
             
             <input
               v-if="isEditing"
@@ -270,7 +271,7 @@ const handleDragEnd = () => {
               @input="updateParameter(index, 'name', ($event.target as HTMLInputElement).value)"
               placeholder="Имя параметра"
             />
-            <span v-else class="param-name">{{ param.name }}</span>
+            <span v-else class="param-name" :title="param.name">{{ param.name }}</span>
             
             <input
               v-if="isEditing"
@@ -279,7 +280,7 @@ const handleDragEnd = () => {
               @input="updateParameter(index, 'description', ($event.target as HTMLInputElement).value)"
               placeholder="Описание"
             />
-            <span v-else class="param-description">{{ param.description }}</span>
+            <span v-else class="param-description" :title="param.description">{{ param.description }}</span>
             
             <button
               v-if="isEditing"
@@ -294,8 +295,10 @@ const handleDragEnd = () => {
         
         <div v-if="isEditing" class="add-item">
           <InputAutocomplete
+
             ref="newParameterTypeRef"
             class="param-type-input"
+            :isSimpleMode="true"
             :model-value="newParameterType"
             :options="allTypes"
             placeholder="Тип"
@@ -344,7 +347,7 @@ const handleDragEnd = () => {
               @input="updateEnumValue(index, 'name', ($event.target as HTMLInputElement).value)"
               placeholder="Имя"
             />
-            <span v-else class="param-name">{{ enumVal.name }}</span>
+            <span v-else class="param-name" :title="enumVal.name">{{ enumVal.name }}</span>
             
             <span class="param-separator">=</span>
             
@@ -355,7 +358,7 @@ const handleDragEnd = () => {
               @input="updateEnumValue(index, 'value', ($event.target as HTMLInputElement).value)"
               placeholder="Значение"
             />
-            <span v-else class="param-value">{{ enumVal.value }}</span>
+            <span v-else class="param-value" :title="enumVal.value">{{ enumVal.value }}</span>
             
             <button
               v-if="isEditing"
@@ -397,16 +400,16 @@ const handleDragEnd = () => {
 
 <style lang="scss" scoped>
 .card {
-  background: #ffffff;
+  // background: #ffffff;
   border: 1px solid #f3f4f6;
-  border-radius: 0.75rem;
-  margin-bottom: 1rem;
+  // border-radius: 0.75rem;
+  // margin-bottom: 1rem;
   transition: all 0.2s ease;
   cursor: grab;
   position: relative;
 
   &:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    // box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   }
 
   &:active {
@@ -420,7 +423,7 @@ const handleDragEnd = () => {
 
   &--unused {
     opacity: 0.6;
-    background: #f9fafb;
+    // background: #f9fafb;
     border-color: #d1d5db;
   }
 
@@ -439,7 +442,7 @@ const handleDragEnd = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: .75rem 1rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
 
@@ -475,7 +478,7 @@ const handleDragEnd = () => {
 
 .type-badge {
   padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  border-radius: 0.25rem; 
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -492,8 +495,11 @@ const handleDragEnd = () => {
 }
 
 .type-name {
-  font-weight: 600;
-  color: #1f2937;
+  font-weight: 400;
+  color: var(--text-primary, #20AA9F);
+  &.is-not-exist{
+    color: var(--text-tertiary, #93969B);
+  }
 }
 
 .parameter-count {
@@ -509,10 +515,10 @@ const handleDragEnd = () => {
 
 .type-select {
   padding: 0.25rem 0.5rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
+  border-color: unset;
+  border: 0;
   background: #ffffff;
-  color: #1f2937;
+  color: var(--text-info, #2A77EF);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -521,12 +527,12 @@ const handleDragEnd = () => {
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+    // border-color: #unset;
+    // box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
   }
 
   &:hover {
-    border-color: #d1d5db;
+    // border-color: #d1d5db;
   }
 }
 
@@ -581,8 +587,8 @@ const handleDragEnd = () => {
 }
 
 .content {
-  border-top: 1px solid #f3f4f6;
-  padding: 1rem;
+  // border-top: 1px solid #f3f4f6;
+  padding: 0.5rem 1rem;
   overflow: visible;
 }
 
@@ -604,17 +610,19 @@ const handleDragEnd = () => {
 
 .parameter,
 .enum-item {
+  padding-left: 8.2rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem;
-  background: #f9fafb;
+  // padding: 0.5rem;
+  
   border-radius: 0.25rem;
 }
 
 .param-type-input {
   flex: 1;
   min-width: 120px;
+
 }
 
 .param-input {
@@ -633,19 +641,29 @@ const handleDragEnd = () => {
 }
 
 .param-name {
-  flex: 1;
-  font-weight: 500;
+  flex: 0 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  // font-weight: 500;
 }
 
 .param-type {
-  flex: 1;
-  color: #3b82f6;
+  flex: 0 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-info, #20AA9F);
   font-family: monospace;
 }
 
 .param-description {
   flex: 1;
   color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-wrap: nowrap;
   font-style: italic;
 }
 
@@ -661,12 +679,13 @@ const handleDragEnd = () => {
 }
 
 .add-item {
+  padding-left: 8.2rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem;
-  background: #f9fafb;
+  // padding: 0.5rem;
+  
   border-radius: 0.25rem;
-  margin-top: 0.5rem;
+  // margin-top: 0.5rem;
 }
 </style> 

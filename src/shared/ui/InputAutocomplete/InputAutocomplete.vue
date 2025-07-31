@@ -7,12 +7,14 @@ type Props = {
   placeholder?: string
   maxVisible?: number
   allowCustom?: boolean
+  isSimpleMode?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Начните вводить тип...',
   maxVisible: 8,
-  allowCustom: true
+  allowCustom: true,
+  isSimpleMode: false
 })
 
 const emit = defineEmits<{ 
@@ -406,17 +408,23 @@ defineExpose({
 
 <template>
   <div class="autocomplete">
-         <input
-       ref="inputRef"
-       class="input"
-       v-model="input"
-       :placeholder="props.placeholder"
-       @focus="onFocus"
-       @input="onInput"
-       @keydown="onKeydown"
-       autocomplete="off"
-       spellcheck="false"
-     />
+    <div class="input-wrapper">
+      <input
+        ref="inputRef"
+        class="input"
+        :class="{ 'input--simple': props.isSimpleMode }"
+        v-model="input"
+        :placeholder="props.placeholder"
+        @focus="onFocus"
+        @input="onInput"
+        @keydown="onKeydown"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <label class="input-label" :class="{ 'input-label--active': input || isOpen, 'input-label--simple': props.isSimpleMode }">
+        {{ props.placeholder }}
+      </label>
+    </div>
     <div v-if="isOpen" class="list" ref="listRef">
       <div
         v-for="(option, idx) in filteredOptions"
@@ -453,20 +461,53 @@ defineExpose({
   width: 100%;
 }
 
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .input {
   width: 100%;
-  padding: 1rem;
+  padding: 1.5rem 1rem 0.5rem;
   border: 1px solid #f3f4f6;
   border-radius: 0.5rem;
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s ease;
-  background: #ffffff;
+  background: var(--neutral-10, #EAEAEB);
   color: #1f2937;
-
-  &:focus {
-    border-color: #3b82f6;
+  &.input--simple{
+    background: var(--background-primary, #FFFFFF );
+    padding: 0.5rem 1rem;
   }
+  &:focus {
+    border-color: var(--text-primary, #1F2937);
+  }
+
+  &::placeholder {
+    opacity: 0;
+  }
+}
+
+.input-label {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  font-size: 1rem;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  // background: #ffffff;
+  padding: 0 0.25rem;
+
+  &.input-label--active {
+    top: 0.5rem;
+    left: 0.8rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #686C73);
+    &.input-label--simple{
+      visibility: hidden;
+  }}
 }
 
 .list {
@@ -495,14 +536,14 @@ defineExpose({
   }
 
   &.option--highlighted {
-    background-color: #3b82f6;
+    background-color:var(--neutral-10, #d3d8e0);
     color: white;
   }
 
   &.option--custom {
     border-top: 1px solid #f3f4f6;
     font-style: italic;
-    color: #10b981;
+    color: var(--text-primary, #2A77EF);;
     
     .custom-icon {
       margin-right: 0.5rem;

@@ -109,7 +109,7 @@ const handleDragLeave = () => {
 
 <style lang="scss" scoped>
 .custom-types {
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .section-title {
