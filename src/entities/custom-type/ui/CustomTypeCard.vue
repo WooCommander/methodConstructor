@@ -209,15 +209,13 @@ const handleDragEnd = () => {
          <!-- <span class="parameter-count">
            ({{ type.type === 'class' ? type.parameters.length + ' параметров' : type.enumValues.length + ' значений' }})
          </span> -->
-       </div>
-       <div class="header-controls">
-         <div class="actions">
+         <div class="header-controls">
+         <div class="actions" v-if ="!isEditing" >
            <button 
              class="action-btn"
              @click.stop="isEditing = !isEditing"
-             :title="isEditing ? 'Сохранить' : 'Редактировать'"
            >
-             {{ isEditing ? '✓' : '✎' }}
+             {{  '+' }}
            </button>
            <!-- <button 
              class="action-btn delete-btn"
@@ -228,6 +226,8 @@ const handleDragEnd = () => {
            </button> -->
          </div>
        </div>
+       </div>
+
      </div>
     
     <!-- Ошибки валидации -->
@@ -272,7 +272,7 @@ const handleDragEnd = () => {
               placeholder="Имя параметра"
             />
             <span v-else class="param-name" :title="param.name">{{ param.name }}</span>
-            
+            <span class="param-description">//</span>
             <input
               v-if="isEditing"
               class="param-input"
@@ -295,7 +295,6 @@ const handleDragEnd = () => {
         
         <div v-if="isEditing" class="add-item">
           <InputAutocomplete
-
             ref="newParameterTypeRef"
             class="param-type-input"
             :isSimpleMode="true"
@@ -319,12 +318,19 @@ const handleDragEnd = () => {
             @keyup.enter="addParameter"
           />
           <button 
-            class="action-btn add-btn"
-            @click="addParameter"
+            class="action-btn add-btn"style="min-width: 2rem;"
+            @click="()=>{addParameter();isEditing = !isEditing}"
             title="Добавить параметр"
           >
-            +
+          ✓
           </button>
+          <button 
+             class="action-btn" style="min-width: 2rem;"
+             @click.stop="isEditing = !isEditing"
+
+           >
+           ×
+           </button>
         </div>
       </div>
 
@@ -620,8 +626,8 @@ const handleDragEnd = () => {
 }
 
 .param-type-input {
-  flex: 1;
-  min-width: 120px;
+  flex: 0;
+  min-width: 11rem;
 
 }
 
@@ -641,7 +647,7 @@ const handleDragEnd = () => {
 }
 
 .param-name {
-  flex: 0 10rem;
+  // flex: 0 10rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -649,7 +655,7 @@ const handleDragEnd = () => {
 }
 
 .param-type {
-  flex: 0 8rem;
+  // flex: 0 8rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -658,8 +664,8 @@ const handleDragEnd = () => {
 }
 
 .param-description {
-  flex: 1;
-  color: #6b7280;
+  // flex: 1;
+  color:var(--text-tertiary, #7CAA20);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

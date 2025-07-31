@@ -482,6 +482,7 @@ defineExpose({
   }
   &:focus {
     border-color: var(--text-primary, #1F2937);
+    
   }
 
   &::placeholder {
@@ -508,6 +509,9 @@ defineExpose({
     &.input-label--simple{
       visibility: hidden;
   }}
+  &.input-label--simple{
+    top: 0.5rem;
+  }
 }
 
 .list {
